@@ -33,9 +33,9 @@ function M.setup()
             ['<Tab>'] = { 'accept', 'fallback' },
             ['<CR>'] = { 'hide', 'fallback' },
 
-            -- Navigate completions
-            ['<C-n>'] = { 'select_next', 'fallback' },
-            ['<C-p>'] = { 'select_prev', 'fallback' },
+            -- Navigate completions (show menu if not visible, then navigate)
+            ['<C-n>'] = { 'show', 'select_next', 'fallback' },
+            ['<C-p>'] = { 'show', 'select_prev', 'fallback' },
             ['<Down>'] = { 'select_next', 'fallback' },
             ['<Up>'] = { 'select_prev', 'fallback' },
 
@@ -104,8 +104,16 @@ function M.setup()
                     name = 'path',
                     enabled = true,
                     module = 'blink.cmp.sources.path',
-                    score_offset = 50,
-                    -- Path provider uses defaults
+                    score_offset = 10,  -- Boost path priority (default is 3)
+                    min_keyword_length = 0,
+                    opts = {
+                        trailing_slash = true,  -- CRITICAL: Must be true for nested paths!
+                        label_trailing_slash = true,
+                        get_cwd = function(context)
+                            return vim.fn.expand(('#%d:p:h'):format(context.bufnr))
+                        end,
+                        show_hidden_files_by_default = true,
+                    },
                 },
                 snippets = {
                     name = 'snippets',
@@ -118,8 +126,9 @@ function M.setup()
                     name = 'buffer',
                     enabled = true,
                     module = 'blink.cmp.sources.buffer',
-                    score_offset = -50,     -- Lowest priority
-                    min_keyword_length = 4, -- Need 4 chars for buffer completions
+                    score_offset = -100,    -- VERY low priority
+                    min_keyword_length = 5, -- Need 5 chars minimum (was 4)
+                    max_items = 10,         -- Limit buffer suggestions to 10
                     -- This reduces noise from buffer completions
                 },
             },
@@ -138,6 +147,8 @@ function M.setup()
             trigger = {
                 show_on_keyword = true,
                 show_on_trigger_character = true,
+                show_on_insert_on_trigger_character = true,
+                show_on_accept_on_trigger_character = true,  -- CRITICAL: Re-trigger after accepting path with /
             },
 
             -- List configuration
@@ -158,8 +169,9 @@ function M.setup()
                     -- What to show in completion menu
                     columns = {
                         { 'kind_icon' },
-                        { 'label',    'label_description', gap = 1 },
+                        { 'label', 'label_description', gap = 1 },
                         { 'kind' },
+                        { 'source_name' },  -- Show where completion is from (Path/Buffer/LSP)
                     },
                     -- Add source indicator
                     components = {
