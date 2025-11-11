@@ -1,0 +1,72 @@
+# ==============================================================================
+# MODULUS FIDUS - Hardened .gitignore
+# ==============================================================================
+# IMPORTANT: lazy-lock.json is NOT ignored - it's committed for reproducibility
+# ==============================================================================
+
+# Plugin compiled files (but not after/plugin)
+/plugin/
+
+# Temporary files
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Session files (contain paths, could be sensitive)
+Session.vim
+*.session
+
+# Tags
+tags
+.tags
+
+# Log files
+*.log
+
+# Backup files
+*.bak
+*.orig_bak
+*.backup
+*.new_v*
+
+# Private notes and session files
+CLAUDE_SESSION_NOTES.md
+*SESSION_NOTES*
+*.notes
+
+# Temporary test files
+/tmp/
+*.txt.backup
+
+# Claude Code cache, logs, and settings (machine-specific)
+.claude/
+
+# Test directories (not present in fidus, but ignore if created)
+/04_COMPREHENSIVE_TEST_SUITE/
+/03_TEST_LAB/
+/02_TRAINING/
+/LEARNING_PROJECTS/
+/99_ARCHIVE/
+
+# Oil.nvim file manager state
+oil:/
+
+# LSP and language server files
+.null-ls_*
+.luarc.json
+
+# Operating system files
+Thumbs.db
+Desktop.ini
+
+# IDE files
+.vscode/
+.idea/
+*.iml
+
+# ==============================================================================
+# SECURITY NOTE:
+# lazy-lock.json is COMMITTED in this repository for reproducible builds
+# Do not add it to .gitignore
+# ==============================================================================
