@@ -1,6 +1,6 @@
-# Installation Guide for Modulus-nvim
+# Installation Guide for Modulus Fidus
 
-This guide will walk you through installing Modulus-nvim on any platform.
+This guide will walk you through installing Modulus Fidus on any platform (Linux, macOS, Windows, WSL).
 
 ## Table of Contents
 
@@ -9,6 +9,7 @@ This guide will walk you through installing Modulus-nvim on any platform.
   - [Linux/macOS](#linuxmacos)
   - [Windows](#windows)
   - [WSL (Windows Subsystem for Linux)](#wsl-windows-subsystem-for-linux)
+- [Clipboard Setup (Important)](#clipboard-setup-important)
 - [Post-Installation Steps](#post-installation-steps)
 - [Troubleshooting](#troubleshooting)
 - [Updating](#updating)
@@ -39,11 +40,6 @@ sudo apt update && sudo apt install -y \
   python3-venv \
   wget
 
-# Install glow (markdown viewer)
-wget https://github.com/charmbracelet/glow/releases/download/v1.5.1/glow_1.5.1_linux_amd64.tar.gz
-tar -xzf glow_1.5.1_linux_amd64.tar.gz
-sudo mv glow /usr/local/bin/
-rm glow_1.5.1_linux_amd64.tar.gz
 ```
 
 Verify Neovim version (must be 0.9.0+):
@@ -80,11 +76,6 @@ sudo dnf install -y \
   python3-pip \
   wget
 
-# Install glow
-wget https://github.com/charmbracelet/glow/releases/download/v1.5.1/glow_1.5.1_linux_amd64.tar.gz
-tar -xzf glow_1.5.1_linux_amd64.tar.gz
-sudo mv glow /usr/local/bin/
-rm glow_1.5.1_linux_amd64.tar.gz
 ```
 
 #### macOS
@@ -94,7 +85,7 @@ rm glow_1.5.1_linux_amd64.tar.gz
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 
 # Install dependencies
-brew install neovim git ripgrep fd node curl wget python3 glow
+brew install neovim git ripgrep fd node curl wget python3
 ```
 
 #### Windows (PowerShell as Administrator)
@@ -151,7 +142,7 @@ After installing Rust, blink.cmp will automatically compile with `cargo build --
 
 2. **Clone the repository**
    ```bash
-   git clone https://github.com/EvanusModestus/modulus-nvim.git ~/.config/nvim
+   git clone https://github.com/EvanusModestus/modulus-fidus-nvim.git ~/.config/nvim
    ```
 
 3. **Launch Neovim**
@@ -177,7 +168,7 @@ After installing Rust, blink.cmp will automatically compile with `cargo build --
 
 2. **Clone the repository directly to the Neovim config location**
    ```powershell
-   git clone https://github.com/EvanusModestus/modulus-nvim.git $env:LOCALAPPDATA\nvim
+   git clone https://github.com/EvanusModestus/modulus-fidus-nvim.git $env:LOCALAPPDATA\nvim
    ```
 
 3. **Launch Neovim**
@@ -196,7 +187,7 @@ This method allows you to keep the config in a custom location while Neovim read
 1. **Clone to a custom location**
    ```powershell
    cd C:\Users\$env:USERNAME
-   git clone https://github.com/EvanusModestus/modulus-nvim.git modulus-nvim
+   git clone https://github.com/EvanusModestus/modulus-fidus-nvim.git modulus-nvim
    ```
 
 2. **Create a junction (not a symlink)**
@@ -224,11 +215,112 @@ Follow the same steps as [Linux/macOS](#linuxmacos):
 mv ~/.config/nvim ~/.config/nvim.backup
 
 # 2. Clone repository
-git clone https://github.com/EvanusModestus/modulus-nvim.git ~/.config/nvim
+git clone https://github.com/EvanusModestus/modulus-fidus-nvim.git ~/.config/nvim
 
 # 3. Launch Neovim
 nvim
 ```
+
+---
+
+## Clipboard Setup (Important)
+
+Copy/paste between Neovim and your system requires platform-specific setup. **This config auto-detects your environment**, but you must install the appropriate clipboard provider.
+
+### Linux (Native)
+
+Install one of these clipboard providers:
+
+```bash
+# Option 1: xclip (X11) - Most common
+sudo apt install xclip          # Debian/Ubuntu
+sudo dnf install xclip          # Fedora
+
+# Option 2: xsel (X11)
+sudo apt install xsel           # Debian/Ubuntu
+sudo dnf install xsel           # Fedora
+
+# Option 3: wl-clipboard (Wayland)
+sudo apt install wl-clipboard   # Debian/Ubuntu
+sudo dnf install wl-clipboard   # Fedora
+```
+
+Verify clipboard works:
+```bash
+echo "test" | xclip -selection clipboard
+xclip -selection clipboard -o  # Should print "test"
+```
+
+### macOS
+
+Clipboard works out of the box via `pbcopy`/`pbpaste`. No setup needed.
+
+### Windows (Native Neovim)
+
+Clipboard works out of the box. No setup needed.
+
+### WSL (Windows Subsystem for Linux)
+
+WSL requires `win32yank.exe` to bridge the Windows clipboard:
+
+```bash
+# Download win32yank
+curl -sLo /tmp/win32yank.zip https://github.com/equalsraf/win32yank/releases/download/v0.1.1/win32yank-x64.zip
+
+# Extract and install
+unzip -p /tmp/win32yank.zip win32yank.exe > /tmp/win32yank.exe
+chmod +x /tmp/win32yank.exe
+sudo mv /tmp/win32yank.exe /usr/local/bin/
+
+# Verify installation
+win32yank.exe --version
+```
+
+**The config auto-detects `win32yank.exe`** and configures clipboard integration automatically (see `lua/evanusmodestus/modules/core/settings.lua`).
+
+Verify clipboard works:
+```bash
+echo "test" | win32yank.exe -i
+win32yank.exe -o  # Should print "test"
+```
+
+### SSH/Remote Sessions
+
+When using Neovim over SSH, clipboard requires extra setup:
+
+**Option 1: OSC 52 (Recommended for modern terminals)**
+
+Add to your terminal config or use a terminal that supports OSC 52 (iTerm2, kitty, alacritty, Windows Terminal).
+
+**Option 2: X11 Forwarding**
+```bash
+ssh -X user@host  # Enable X11 forwarding
+```
+Requires `xclip` on the remote server.
+
+### Verifying Clipboard in Neovim
+
+Inside Neovim, run:
+```vim
+:checkhealth
+```
+
+Look for the **Clipboard** section. It should show:
+```
+Clipboard (optional)
+- OK Clipboard tool found: xclip (or win32yank, pbcopy, etc.)
+```
+
+### Clipboard Keybindings
+
+This config uses system clipboard by default (`clipboard = 'unnamedplus'`):
+
+| Key | Action |
+|-----|--------|
+| `y` | Yank to system clipboard |
+| `p` | Paste from system clipboard |
+| `<leader>y` | Yank to clipboard (explicit) |
+| `<leader>p` | Paste without overwriting register |
 
 ---
 
@@ -290,24 +382,6 @@ Make sure your terminal is using a Nerd Font:
 - **Windows Terminal**: Settings → Profiles → Appearance → Font face
 - **Alacritty**: Edit `~/.config/alacritty/alacritty.yml`
 - **Kitty**: Edit `~/.config/kitty/kitty.conf`
-
-### 5. Optional: Obsidian Integration
-
-If you use Obsidian for note-taking:
-
-1. Open the Obsidian capture plugin:
-   ```bash
-   nvim ~/.config/nvim/lua/evanusmodestus/modules/plugins/obsidian-capture.lua
-   ```
-
-2. Update line 26 with your vault path:
-   ```lua
-   vault_path = vim.fn.expand('~/path/to/your/vault'),
-   ```
-
-3. Customize the `paths` table to match your vault's folder structure
-
-If you don't use Obsidian, the plugin will automatically disable itself—no action needed!
 
 ---
 
@@ -409,6 +483,47 @@ xcode-select --install
 **Solution**:
 ```bash
 git config --global core.autocrlf true
+```
+
+### Clipboard Not Working
+
+**Issue**: Copy/paste between Neovim and system clipboard doesn't work
+
+**Diagnosis**:
+```vim
+:checkhealth
+```
+Look for the Clipboard section.
+
+**Solutions by platform**:
+
+**Linux**:
+```bash
+# Check if clipboard tool exists
+which xclip xsel wl-copy
+
+# Install one if missing
+sudo apt install xclip  # Debian/Ubuntu
+sudo dnf install xclip  # Fedora
+```
+
+**WSL**:
+```bash
+# Check if win32yank is installed and accessible
+which win32yank.exe
+win32yank.exe --version
+
+# If not found, install it (see Clipboard Setup section above)
+```
+
+**SSH sessions**:
+- X11 forwarding: `ssh -X user@host` and install `xclip` on remote
+- Or use a terminal with OSC 52 support
+
+**Verify Neovim detected it**:
+```vim
+:echo has('clipboard')     " Should return 1
+:echo &clipboard           " Should show 'unnamedplus'
 ```
 
 ---
