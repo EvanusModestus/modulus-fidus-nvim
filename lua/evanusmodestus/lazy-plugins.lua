@@ -299,15 +299,7 @@ local plugins = {
         ft = { 'markdown', 'text' },
     },
 
-    -- Technical writing tools (spell check, word count, etc.)
-    {
-        'writing-tools',
-        dir = vim.fn.stdpath('config') .. '/lua/evanusmodestus/modules/plugins/writing-tools.lua',
-        ft = { 'markdown', 'text', 'gitcommit' },
-        config = function()
-            -- Loaded via autocmd in writing-tools.lua
-        end,
-    },
+    -- Technical writing tools loaded via autocmd in writing-tools.lua (not a plugin)
 
     -- Enhanced table editing
     {

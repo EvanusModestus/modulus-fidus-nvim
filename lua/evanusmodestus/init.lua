@@ -54,6 +54,9 @@ vim.api.nvim_create_autocmd('User', {
             -- Simple REST client for .http files
             require('evanusmodestus.modules.plugins.simple-rest').setup()
 
+            -- Technical writing tools (spell check, word count, etc.)
+            require('evanusmodestus.modules.plugins.writing-tools').setup()
+
             -- Setup visual enhancements
             require('evanusmodestus.modules.ui.visual-enhancements').setup()
 
