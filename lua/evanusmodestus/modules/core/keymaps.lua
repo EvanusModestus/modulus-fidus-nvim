@@ -55,8 +55,10 @@ vim.keymap.set("n", "<leader>s", [[:%s/\<<C-r><C-w>\>/<C-r><C-w>/gI<Left><Left><
 -- Make file executable
 vim.keymap.set("n", "<leader>x", "<cmd>!chmod +x %<CR>", { silent = true })
 
--- Edit plugin configuration
-vim.keymap.set("n", "<leader>vpp", "<cmd>e ~/.config/nvim/lua/evanusmodestus/lazy.lua<CR>");
+-- Edit plugin configuration (cross-platform)
+vim.keymap.set("n", "<leader>vpp", function()
+    vim.cmd("e " .. vim.fn.stdpath("config") .. "/lua/evanusmodestus/lazy-plugins.lua")
+end, { desc = "Edit plugin config" })
 
 -- Source current file
 vim.keymap.set("n", "<leader><leader>", function()

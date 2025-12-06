@@ -59,8 +59,6 @@ vim.api.nvim_create_autocmd('User', {
 
             -- Setup visual enhancements
             require('evanusmodestus.modules.ui.visual-enhancements').setup()
-
-            print('All keymaps loaded!')
         end, 100)
     end,
 })

@@ -108,7 +108,6 @@ local plugins = {
         keys = { '<leader>a', '<C-e>', '<C-h>', '<C-t>', '<C-n>', '<C-s>' },  -- Load on first keypress
         config = function()
             local harpoon = require('evanusmodestus.modules.plugins.harpoon')
-            harpoon.setup()   -- Configure UI with wider window
             harpoon.keymaps() -- Set up keybindings
         end
     },

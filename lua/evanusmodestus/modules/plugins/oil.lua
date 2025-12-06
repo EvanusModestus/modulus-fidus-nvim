@@ -16,8 +16,14 @@ function M.setup()
 end
 
 function M.keymaps()
-    -- Add keybindings to open oil
-    vim.keymap.set("n", "<leader>e", "<CMD>Oil<CR>", { desc = "Open parent directory" })
+    -- Toggle oil - press again to close
+    vim.keymap.set("n", "<leader>e", function()
+        if vim.bo.filetype == "oil" then
+            require("oil").close()
+        else
+            require("oil").open()
+        end
+    end, { desc = "Toggle Oil file explorer" })
 end
 
 return M

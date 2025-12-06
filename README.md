@@ -53,18 +53,28 @@ Modulus Fidus removes plugins that pose security or compliance risks:
 
 ## Quick Start
 
+### Prerequisites
+- Neovim 0.9.0+ (`nvim --version`)
+- Git
+- A [Nerd Font](https://www.nerdfonts.com/) installed in your terminal
+
+### Install
+
+**Linux/macOS/WSL:**
 ```bash
-# Clone the repository
 git clone https://github.com/EvanusModestus/modulus-fidus-nvim.git ~/.config/nvim
-
-# Launch Neovim (plugins auto-install)
 nvim
-
-# Install language servers
-:Mason
 ```
 
-For complete installation instructions including air-gapped environments, see **[INSTALLATION.md](INSTALLATION.md)**.
+**Windows (PowerShell):**
+```powershell
+git clone https://github.com/EvanusModestus/modulus-fidus-nvim.git $env:LOCALAPPDATA\nvim
+nvim
+```
+
+Plugins auto-install on first launch. Then run `:Mason` to install language servers.
+
+For clipboard setup, build tools, and air-gapped installation, see **[INSTALLATION.md](INSTALLATION.md)**.
 
 ## Architecture
 

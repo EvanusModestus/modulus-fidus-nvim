@@ -1,19 +1,16 @@
 -- ============================================================================
--- FILE: markdown.lua
--- PURPOSE: Enhanced Markdown configuration with autocompletion and snippets
--- LOCATION: ~/neovim-config/lua/evanusmodestus/modules/plugins/markdown.lua
+-- Enhanced Markdown configuration with autocompletion and snippets
 -- ============================================================================
 --
--- WHAT THIS FILE DOES:
+-- Features:
 -- 1. Provides LuaSnip snippets for common markdown patterns (code blocks, links, etc.)
--- 2. Creates Obsidian-compatible YAML frontmatter snippets
+-- 2. Creates YAML frontmatter snippets (Obsidian/Logseq/any PKM compatible)
 -- 3. Sets up markdown-specific autocompletion (including spell check)
 -- 4. Adds markdown-specific keybindings for formatting
--- 5. Provides validation commands for Obsidian frontmatter
+-- 5. Provides validation commands for YAML frontmatter
 --
--- THIS IS DIFFERENT FROM obsidian-templates.lua:
--- - obsidian-templates.lua = Full document templates (projects, incidents, tasks)
--- - markdown.lua (this file) = Quick snippets and markdown utilities
+-- NOTE: This provides quick snippets and markdown utilities
+-- Customize the frontmatter templates for your own knowledge base system
 --
 -- DEPENDENCIES:
 -- - LuaSnip (snippet engine)
@@ -28,7 +25,7 @@ local M = {}
 -- ============================================================================
 -- SNIPPET SETUP
 -- ============================================================================
--- Creates snippets for common markdown patterns and Obsidian frontmatter
+-- Creates snippets for common markdown patterns and YAML frontmatter
 
 function M.setup()
     -- Import LuaSnip
@@ -142,8 +139,8 @@ function M.setup()
         -- UNIVERSAL FRONTMATTER SNIPPET
         -- ====================================================================
         -- Trigger: Type "yaml-universal" and press Tab
-        -- Creates comprehensive YAML frontmatter for Aethelred-Codex
-        -- Compatible with ALL vault directories and DataViewJS queries
+        -- Creates comprehensive YAML frontmatter for knowledge base documents
+        -- Compatible with Obsidian, Logseq, and other PKM tools with DataView
         --
         -- COVERS: Documents, Tasks, Projects, Operations, Research, etc.
         -- SPECIALIZED: Use "yaml-command" for command documentation
@@ -228,7 +225,7 @@ function M.setup()
         -- ====================================================================
         -- Trigger: Type "yaml-command" and press Tab
         -- Creates detailed command documentation frontmatter
-        -- Compatible with DataViewJS queries in Obsidian
+        -- Compatible with DataView queries in PKM tools
         -- Includes: favorite, rating, success_rate, complexity, etc.
         -- ====================================================================
         s("yaml-command", {
@@ -361,7 +358,7 @@ function M.autocmds()
     vim.api.nvim_create_autocmd("FileType", {
         pattern = "markdown",
         callback = function()
-            -- Set conceallevel for cleaner Obsidian UI
+            -- Set conceallevel for cleaner markdown UI
             -- Level 2 = hide markdown syntax (**, __, etc.)
             vim.opt_local.conceallevel = 2
             vim.opt_local.concealcursor = 'nc'  -- Keep concealing in normal/command mode
@@ -444,57 +441,11 @@ function M.autocmds()
                 "i| Column 1 | Column 2 | Column 3 |<CR>|----------|----------|----------|<CR>| | | |<Esc>",
                 opts)
 
-            -- ================================================================
-            -- VISUAL SELECTION TO TABLE CONVERTER
-            -- ================================================================
-            -- Keymap: <leader>mtt (visual mode)
-            --
-            -- WHAT IT DOES:
-            -- Converts visually selected text into a markdown table.
-            -- Perfect for when you paste data FIRST, then realize you need a table.
-            --
-            -- HOW IT WORKS:
-            -- 1. Gets the visual selection range (start/end lines)
-            -- 2. Reads the selected text
-            -- 3. Auto-detects delimiter (tabs, commas, or spaces)
-            -- 4. Splits each line into cells
-            -- 5. Builds markdown table with header separator
-            -- 6. Replaces selection with formatted table
-            --
-            -- WHEN TO USE:
-            -- - You pasted ps aux output → select lines → <leader>mtt
-            -- - You pasted Excel data → select it → <leader>mtt
-            -- - Any multi-line tabular data that's already in your file
-            --
-            -- DIFFERENCE FROM table-paste SNIPPET:
-            -- - table-paste: Data in clipboard → type trigger → instant table
-            -- - <leader>mtt: Data already in file → select → convert
-            --
-            -- EXAMPLE:
-            -- Before (select these lines):
-            --   USER  PID   %CPU
-            --   root  1     0.0
-            --   evan  1234  2.3
-            --
-            -- After (<leader>mtt):
-            --   | USER | PID  | %CPU |
-            --   |------|------|------|
-            --   | root | 1    | 0.0  |
-            --   | evan | 1234 | 2.3  |
-            --
-            -- USAGE:
-            -- 1. Paste data into markdown file
-            -- 2. Visual select lines (V + arrow keys)
-            -- 3. Press <leader>mtt
-            -- 4. Done! Selected text becomes table
-            -- ================================================================
+            -- Visual selection to markdown table converter
+            -- Usage: Select lines in visual mode, press <leader>mtt
             vim.keymap.set("v", "<leader>mtt", function()
-                -- STEP 1: GET VISUAL SELECTION
-                -- Get start and end line numbers of visual selection
                 local start_line = vim.fn.line("'<")
                 local end_line = vim.fn.line("'>")
-
-                -- Read the selected lines from buffer
                 local lines = vim.api.nvim_buf_get_lines(0, start_line - 1, end_line, false)
 
                 if #lines == 0 then
@@ -502,65 +453,38 @@ function M.autocmds()
                     return
                 end
 
-                -- STEP 2: DETECT DELIMITER
-                -- Same logic as table-paste snippet
-                local delimiter = '\t'  -- Default: tab-separated
-
+                -- Auto-detect delimiter (tab, comma, or spaces)
+                local delimiter = '\t'
                 if not lines[1]:find('\t') then
-                    if lines[1]:find(',') then
-                        delimiter = ','  -- CSV data
-                    else
-                        delimiter = '%s%s+'  -- Space-separated (command output)
-                    end
+                    delimiter = lines[1]:find(',') and ',' or '%s%s+'
                 end
 
-                -- STEP 3: PARSE ALL ROWS
                 local rows = {}
                 local max_cols = 0
 
                 for _, line in ipairs(lines) do
-                    -- Split line by delimiter
                     local cells = vim.split(line, delimiter, { trimempty = false })
-
-                    -- Trim whitespace from each cell
                     for j, cell in ipairs(cells) do
                         cells[j] = vim.trim(cell)
                     end
-
                     table.insert(rows, cells)
                     max_cols = math.max(max_cols, #cells)
                 end
 
-                -- STEP 4: BUILD MARKDOWN TABLE
                 local result = {}
-
                 for i, row in ipairs(rows) do
-                    -- Pad with empty cells if needed
-                    while #row < max_cols do
-                        table.insert(row, '')
-                    end
-
-                    -- Build row: | cell1 | cell2 | cell3 |
-                    local formatted_row = '| ' .. table.concat(row, ' | ') .. ' |'
-                    table.insert(result, formatted_row)
-
-                    -- Add separator after header (first row)
+                    while #row < max_cols do table.insert(row, '') end
+                    table.insert(result, '| ' .. table.concat(row, ' | ') .. ' |')
                     if i == 1 then
-                        local separator_parts = {}
-                        for _ = 1, max_cols do
-                            table.insert(separator_parts, '-------')
-                        end
-                        local separator = '| ' .. table.concat(separator_parts, ' | ') .. ' |'
-                        table.insert(result, separator)
+                        local sep = {}
+                        for _ = 1, max_cols do table.insert(sep, '-------') end
+                        table.insert(result, '| ' .. table.concat(sep, ' | ') .. ' |')
                     end
                 end
 
-                -- STEP 5: REPLACE SELECTION WITH TABLE
-                -- Replace the selected lines with our formatted table
                 vim.api.nvim_buf_set_lines(0, start_line - 1, end_line, false, result)
-
-                vim.notify("✅ Converted " .. #lines .. " lines to markdown table!", vim.log.levels.INFO)
-            end, { buffer = true, silent = true, desc = "Convert visual selection to markdown table" })
+                vim.notify("Converted to markdown table", vim.log.levels.INFO)
+            end, { buffer = true, silent = true, desc = "Convert selection to table" })
 
             -- ================================================================
             -- PREVIEW SHORTCUTS
@@ -663,15 +587,15 @@ After installing, restart Neovim to use :Glow command
     end, { desc = 'Toggle markdown syntax concealing' })
 
     -- ========================================================================
-    -- OBSIDIAN FRONTMATTER VALIDATOR
+    -- FRONTMATTER VALIDATOR
     -- ========================================================================
-    -- Checks if the current file has valid Aethelred-Codex frontmatter
+    -- Checks if the current file has valid YAML frontmatter for PKM systems
 
-    local function validate_obsidian_frontmatter()
+    local function validate_frontmatter()
         local lines = vim.api.nvim_buf_get_lines(0, 0, 50, false)
         local in_frontmatter = false
 
-        -- Required fields for Aethelred-Codex
+        -- Required fields for knowledge base documents
         local has_uuid = false
         local has_id = false
         local has_title = false
@@ -718,10 +642,10 @@ After installing, restart Neovim to use :Glow command
 
         -- Display results
         if #missing == 0 and tags_format_correct then
-            vim.notify("✅ Obsidian frontmatter validation passed! Aethelred-Codex compliant.",
+            vim.notify("✅ Frontmatter validation passed!",
                 vim.log.levels.INFO)
         else
-            local message = "Obsidian Frontmatter Issues:\n\n"
+            local message = "Frontmatter Issues:\n\n"
             if #missing > 0 then
                 message = message .. "❌ Missing fields: " .. table.concat(missing, ", ") .. "\n"
             end
@@ -733,165 +657,33 @@ After installing, restart Neovim to use :Glow command
         end
     end
 
-    vim.api.nvim_create_user_command('ObsidianValidate', validate_obsidian_frontmatter,
-        { desc = 'Validate Obsidian Aethelred-Codex frontmatter compliance' })
+    vim.api.nvim_create_user_command('FrontmatterValidate', validate_frontmatter,
+        { desc = 'Validate YAML frontmatter for PKM systems' })
 
-    -- ========================================================================
-    -- PS AUX TO TABLE COMMAND
-    -- ========================================================================
-    -- Command: :PsTable
-    --
-    -- WHAT IT DOES:
-    -- Runs `ps aux` command and inserts the output as a formatted markdown table
-    -- at the current cursor position.
-    --
-    -- HOW IT WORKS:
-    -- 1. Executes `ps aux` using vim.fn.systemlist()
-    -- 2. Each line of output is parsed into cells (space-separated)
-    -- 3. First line (header) gets special treatment
-    -- 4. Builds markdown table with proper formatting
-    -- 5. Inserts table at current cursor position
-    --
-    -- WHEN TO USE:
-    -- - Documenting current running processes
-    -- - Creating runbooks that need process info
-    -- - Troubleshooting logs
-    -- - System state documentation
-    --
-    -- DIFFERENCE FROM OTHER TABLE METHODS:
-    -- - table-paste: Clipboard data → type snippet → table
-    -- - <leader>mtt: Selected text → keymap → table
-    -- - :PsTable: Runs command → auto-inserts table (no copy/paste!)
-    --
-    -- EXAMPLE OUTPUT:
-    --   | USER | PID  | %CPU | %MEM | VSZ    | RSS   | TTY | STAT | START | TIME   | COMMAND     |
-    --   |------|------|------|------|--------|-------|-----|------|-------|--------|-------------|
-    --   | root | 1    | 0.0  | 0.1  | 168448 | 11904 | ?   | Ss   | 10:23 | 0:01   | /sbin/init  |
-    --   | evan | 1234 | 2.3  | 1.5  | 523456 | 98304 | pts | Sl+  | 14:30 | 0:15   | nvim        |
-    --
-    -- USAGE:
-    -- 1. Position cursor where you want the table
-    -- 2. Type: :PsTable
-    -- 3. Press Enter
-    -- 4. Done! Process table inserted
-    --
-    -- EXTENSION IDEAS:
-    -- You can easily create similar commands for other outputs:
-    -- - :DfTable → df -h output
-    -- - :LsTable → ls -la output
-    -- - :NetstatTable → netstat -tulpn output
-    -- Just copy this pattern and change the command!
-    -- ========================================================================
+    -- Insert `ps aux` output as markdown table (Linux/macOS only)
     vim.api.nvim_create_user_command('PsTable', function()
-        -- STEP 1: RUN PS AUX COMMAND
-        -- systemlist() returns output as array of lines
         local output = vim.fn.systemlist('ps aux')
-
-        if vim.v.shell_error ~= 0 then
-            vim.notify("❌ Failed to run 'ps aux' command", vim.log.levels.ERROR)
+        if vim.v.shell_error ~= 0 or #output == 0 then
+            vim.notify("Failed to run 'ps aux'", vim.log.levels.ERROR)
             return
         end
 
-        if #output == 0 then
-            vim.notify("❌ No output from 'ps aux'", vim.log.levels.WARN)
-            return
-        end
-
-        -- STEP 2: PARSE EACH LINE INTO CELLS
         local result = {}
-
         for i, line in ipairs(output) do
-            -- Split by multiple spaces (ps aux output is space-separated)
             local cells = vim.split(line, '%s+', { trimempty = true })
-
-            -- Trim whitespace from cells
-            for j, cell in ipairs(cells) do
-                cells[j] = vim.trim(cell)
-            end
-
-            -- Build markdown row
-            local formatted_row = '| ' .. table.concat(cells, ' | ') .. ' |'
-            table.insert(result, formatted_row)
-
-            -- Add separator after header (first row)
+            for j, cell in ipairs(cells) do cells[j] = vim.trim(cell) end
+            table.insert(result, '| ' .. table.concat(cells, ' | ') .. ' |')
             if i == 1 then
-                local separator_parts = {}
-                for _ = 1, #cells do
-                    table.insert(separator_parts, '-------')
-                end
-                local separator = '| ' .. table.concat(separator_parts, ' | ') .. ' |'
-                table.insert(result, separator)
+                local sep = {}
+                for _ = 1, #cells do table.insert(sep, '-------') end
+                table.insert(result, '| ' .. table.concat(sep, ' | ') .. ' |')
             end
         end
 
-        -- STEP 3: INSERT AT CURSOR POSITION
-        -- Get current cursor row
         local row = vim.api.nvim_win_get_cursor(0)[1]
-
-        -- Insert table at cursor (current row)
         vim.api.nvim_buf_set_lines(0, row, row, false, result)
-
-        vim.notify("✅ Inserted process table (" .. #output .. " processes)", vim.log.levels.INFO)
-    end, { desc = 'Insert ps aux output as markdown table at cursor' })
+        vim.notify("Inserted process table", vim.log.levels.INFO)
+    end, { desc = 'Insert ps aux as markdown table' })
 end
 
 return M
-
--- ============================================================================
--- USAGE GUIDE
--- ============================================================================
---
--- HOW TO USE THIS MODULE IN YOUR CONFIG:
--- In your init.lua or plugin configuration:
---
---   local markdown = require("evanusmodestus.modules.plugins.markdown")
---   markdown.setup()      -- Sets up snippets and completion
---   markdown.autocmds()   -- Sets up markdown keybindings
---   markdown.commands()   -- Creates user commands
---
--- AVAILABLE SNIPPETS:
--- Basic Markdown:
---   code          → Code block with syntax highlighting
---   link          → Markdown link [text](url)
---   linkc         → Link with clipboard URL (cursor in text field)
---   img           → Image embed ![alt](url)
---   bold          → **bold text**
---   italic        → *italic text*
---   h1/h2/h3      → Headers
---   task          → - [ ] checkbox
---   table         → Markdown table
---
--- Frontmatter Templates (type "yaml-" to see all):
---   yaml-universal   → Universal frontmatter (documents, tasks, projects, operations)
---                      Includes: uuid, id, title, description, category, subcategory,
---                      type, status, priority, version, optional fields (progress,
---                      owner, estimated_hours, due_date, parent_project, assets_path)
---   yaml-command     → Command documentation with tracking fields
---                      Includes: favorite, personal_rating, success_rate, times_used,
---                      complexity, platforms, risk_level, time_saved, etc.
---
--- Emojis:
---   check/cross/warning/info/fire/rocket/star/bug/boom/sparkles
---
--- KEYBINDINGS (Markdown files only):
---   <leader>mb/mi/mc → Bold/Italic/Code
---   <leader>m1-4     → Headers H1-H4
---   <leader>ml/mn    → Bullet/Numbered list
---   <leader>mt/md/mu → Task checkbox (create/done/undone)
---   <leader>mk       → Make selection a link
---   <leader>mT       → Insert table
---   <leader>mp/ms    → Preview start/stop
---   <leader>mg       → Glow preview (if installed)
---
--- COMMANDS:
---   :Glow              → Preview with Glow
---   :GlowInstall       → Show installation instructions
---   :MarkdownConceal   → Toggle syntax concealing
---   :ObsidianValidate  → Validate frontmatter
---
--- YAML REMINDER:
--- NO COMMAS after field values! YAML uses newlines, not commas.
--- ✅ Correct:   title: "My Title"
--- ❌ Wrong:     title: "My Title",
---
--- ============================================================================

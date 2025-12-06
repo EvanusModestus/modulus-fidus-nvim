@@ -328,7 +328,7 @@ function M.setup()
             'powershell_es',
 
             -- Infrastructure & DevOps
-            'nginx_language_server',
+            -- 'nginx_language_server',  -- Removed: often fails to install, install manually if needed
             'terraformls',
         },
         handlers = {
